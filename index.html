@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Generation</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #0f0f0f;
+      --muted: #ededf0;
+      --border: #dcdcdc;
+      --page: #f7f7f8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--page);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER / FOOTER */
+    header, footer {
+      background: var(--bg);
+      padding: 12px 24px;
+      display: flex;
+      align-items: left;
+      justify-content: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      border-bottom: none;
+      margin-top: auto;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.2px;
+    }
+
+    /* MAIN */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px 24px;
+      gap: 24px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin: 0;
+      text-align: center;
+    }
+
+    .prompt-box {
+      width: 100%;
+      max-width: 900px;
+      background: var(--bg);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 96px;
+      resize: none;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: #aaa;
+    }
+
+    /* TOOLBAR */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+    }
+
+    .group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .btn:hover {
+      background: var(--muted);
+    }
+
+    .btn.icon {
+      width: 32px;
+      padding: 0;
+      justify-content: center;
+    }
+
+    .btn.primary {
+      font-weight: 600;
+      border-color: var(--fg);
+    }
+
+    .btn.toggle[data-active="true"] {
+      background: var(--fg);
+      color: #fff;
+    }
+
+    .more {
+      font-size: 18px;
+      line-height: 0;
+    }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+        <img src="logo.png" alt="Logo" class="logo" style="height:100px; margin-right:16px; margin-top:10px;">
+    </div>
+  </header>
+
+  <main>
+    <h1>What can I help you with today?</h1>
+
+    <div class="prompt-box">
+      <textarea name="prompt" placeholder="Describe what you want to generate..."></textarea>
+
+      <div class="toolbar">
+        <div class="group">
+          <button class="btn">3.0&nbsp;&nbsp;Quality × 1</button>
+          <button class="btn">4:5</button>
+          <button class="btn">Realistic</button>
+          <button class="btn">Character</button>
+          <button class="btn">Color</button>
+        </div>
+
+        <div class="group">
+          <button class="btn toggle" data-active="false" onclick="toggle(this)">✨ Off</button>
+          <button class="btn toggle" data-active="false" onclick="toggle(this)">🔒 Private</button>
+          <button class="btn primary">Generate</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="logo">
+        <img src="footer_logo.png" alt="footer_logo" class="logo" style="height:100px; margin-left:16px;">
+    </div>
+  </footer>
+
+  <script>
+    function toggle(el) {
+      const active = el.getAttribute('data-active') === 'true';
+      el.setAttribute('data-active', String(!active));
+    }
+
+    document.querySelector(".btn.primary").addEventListener("click", async () => {
+    const prompt = document.querySelector("textarea").value;
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      body: new URLSearchParams({ prompt }) // encoding form data
+    });
+    const data = await response.json();
+    console.log(data);
+  });
+
+  </script>
+
+</body>
+</html>

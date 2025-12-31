@@ -1,0 +1,27 @@
+{
+  "name": "claude-streamlit",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShazaAzher/claude-streamlit.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ShazaAzher/claude-streamlit/issues"
+  },
+  "homepage": "https://github.com/ShazaAzher/claude-streamlit#readme",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "multer": "^2.0.2",
+    "node-fetch": "^3.3.2"
+  }
+}
