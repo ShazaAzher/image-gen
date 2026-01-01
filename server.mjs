@@ -55,17 +55,23 @@ app.post("/api/generate", upload.none(), async (req, res) => {
     // Add user message to history
     req.session.messages.push({ role: "user", content: prompt });
 
-    // Prepare FormData for Ideogram API
-    const formData = new URLSearchParams();
-    formData.append("prompt", prompt);
-    formData.append("rendering_speed", "TURBO");
+    // Prepare JSON for Ideogram API
+    const body = {
+      image_request: {
+        prompt: prompt,
+        aspect_ratio: "ASPECT_10_16",
+        model: "V_2",
+        magic_prompt_option: "AUTO"
+      }
+    };
 
-    const response = await fetch("https://api.ideogram.ai/v1/ideogram-v3/generate", {
+    const response = await fetch("https://api.ideogram.ai/v1/generate", {
       method: "POST",
       headers: {
         "Api-Key": process.env.IDEOGRAM_API_KEY,
+        "Content-Type": "application/json"
       },
-      body: formData,
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
