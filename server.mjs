@@ -52,6 +52,10 @@ app.post("/api/generate", upload.none(), async (req, res) => {
       req.session.messages = [];
     }
 
+    // Find the last assistant message with an image
+    const lastAssistantMsg = [...req.session.messages].reverse().find(m => m.role === "assistant" && m.images && m.images.length > 0);
+    const lastImageUrl = lastAssistantMsg ? lastAssistantMsg.images[0].url : null;
+
     // Add user message to history
     req.session.messages.push({ role: "user", content: prompt });
 
@@ -59,6 +63,18 @@ app.post("/api/generate", upload.none(), async (req, res) => {
     const formData = new FormData();
     formData.append("prompt", prompt);
     formData.append("rendering_speed", "TURBO");
+    
+    // If there's a previous image, use it as a style reference to maintain consistency
+    if (lastImageUrl) {
+      try {
+        const imageRes = await fetch(lastImageUrl);
+        const imageBlob = await imageRes.blob();
+        formData.append("style_reference_images", imageBlob, "reference.png");
+        formData.append("style_reference_image_fidelity", "50"); 
+      } catch (e) {
+        console.error("Failed to attach reference image:", e);
+      }
+    }
 
     const response = await fetch("https://api.ideogram.ai/v1/ideogram-v3/generate", {
       method: "POST",
