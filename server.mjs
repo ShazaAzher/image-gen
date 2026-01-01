@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = 5000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,6 +57,6 @@ app.post("/api/generate", upload.none(), async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server listening at http://0.0.0.0:${port}`);
 });
