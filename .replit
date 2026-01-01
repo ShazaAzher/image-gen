@@ -36,3 +36,8 @@ externalPort = 80
 [deployment]
 deploymentTarget = "autoscale"
 run = ["node", "server.mjs"]
+
+[userenv]
+
+[userenv.shared]
+IDEOGRAM_API_KEY = "XjzAld7zVW1e-HFJpCrmVPeJJ3adEkzjhvTpnPxwikxJc1qJ0jv2juMY5InZve_ZdsCj4cueWCRDC9YGAKnlZw"
