@@ -1,0 +1,163 @@
+Generate with Ideogram 3.0
+
+Copy page
+
+POST
+https://api.ideogram.ai/v1/ideogram-v3/generate
+POST
+/v1/ideogram-v3/generate
+
+cURL
+
+curl -X POST https://api.ideogram.ai/v1/ideogram-v3/generate \
+  -H "Api-Key: <apiKey>" \
+  -H "Content-Type: multipart/form-data" \
+  -F prompt="A photo of a cat sleeping on a couch." \
+  -F rendering_speed="TURBO"
+Try it
+
+200
+Successful
+
+{
+  "created": "2000-01-23 04:56:07+00:00",
+  "data": [
+    {
+      "prompt": "A photo of a cat sleeping on a couch.",
+      "resolution": "1024x1024",
+      "is_image_safe": true,
+      "seed": 12345,
+      "url": "https://ideogram.ai/api/images/ephemeral/xtdZiqPwRxqY1Y7NExFmzB.png?exp=1743867804&sig=e13e12677633f646d8531a153d20e2d3698dca9ee7661ee5ba4f3b64e7ec3f89",
+      "style_type": "GENERAL"
+    }
+  ]
+}
+Generates images synchronously based on a given prompt and optional parameters using the Ideogram 3.0 model.
+
+Images links are available for a limited period of time; if you would like to keep the image, you must download it.
+
+Authentication
+Api-Key
+string
+API key for access control. Use in the header with the name “Api-Key”
+
+Request
+A request to generate an image with Ideogram 3.0.
+prompt
+string
+Required
+The prompt to use to generate the image.
+seed
+integer
+Optional
+0-2147483647
+Random seed. Set for reproducible generation.
+resolution
+enum
+Optional
+The resolutions supported for Ideogram 3.0.
+
+Show 69 enum values
+aspect_ratio
+enum
+Optional
+The aspect ratio to use for image generation, which determines the image's resolution. Cannot be used in conjunction with resolution. Defaults to 1x1.
+
+Show 15 enum values
+rendering_speed
+enum
+Optional
+Defaults to DEFAULT
+The rendering speed to use.
+Allowed values:
+FLASH
+TURBO
+DEFAULT
+QUALITY
+magic_prompt
+enum
+Optional
+Determine if MagicPrompt should be used in generating the request or not.
+Allowed values:
+AUTO
+ON
+OFF
+negative_prompt
+string
+Optional
+Description of what to exclude from an image. Descriptions in the prompt take precedence to descriptions in the negative prompt.
+num_images
+integer
+Optional
+1-8
+Defaults to 1
+Number of images to generate.
+color_palette
+object
+Optional
+A color palette for generation, must EITHER be specified via one of the presets (name) or explicitly via hexadecimal representations of the color with optional weights (members). Not supported by V_1, V_1_TURBO, V_2A and V_2A_TURBO models.
+
+
+Show 2 variants
+style_codes
+list of strings
+Optional
+A list of 8 character hexadecimal codes representing the style of the image. Cannot be used in conjunction with style_reference_images or style_type.
+
+style_type
+enum
+Optional
+Defaults to GENERAL
+The style type to generate with.
+Allowed values:
+AUTO
+GENERAL
+REALISTIC
+DESIGN
+FICTION
+style_preset
+enum
+Optional
+A predefined style preset that applies a specific artistic style to the generated image.
+
+Show 62 enum values
+style_reference_images
+files
+Optional
+A set of images to use as style references (maximum total size 10MB across all style references). The images should be in JPEG, PNG or WebP format.
+
+character_reference_images
+files
+Optional
+Generations with character reference are subject to the character reference pricing. A set of images to use as character references (maximum total size 10MB across all character references), currently only supports 1 character reference image. The images should be in JPEG, PNG or WebP format.
+
+character_reference_images_mask
+files
+Optional
+Optional masks for character reference images. When provided, must match the number of character_reference_images. Each mask should be a grayscale image of the same dimensions as the corresponding character reference image. The images should be in JPEG, PNG or WebP format.
+
+Response
+Image(s) generated successfully.
+
+created
+datetime
+The time the request was created.
+data
+list of objects
+A list of ImageObjects that contain the generated image(s).
+
+
+Show 7 properties
+Errors
+
+400
+Bad Request Error
+
+401
+Unauthorized Error
+
+422
+Unprocessable Entity Error
+
+429
+Too Many Requests Error
