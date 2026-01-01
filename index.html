@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ideogram Chat</title>
+  <title>Image Generation</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -182,12 +182,20 @@
 </head>
 <body>
 
-  <header>
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <img src="logo.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
-      <span style="font-weight: 600;">Ideogram Chat</span>
+  <header style="padding: 0 24px;">
+    <div style="display: flex; align-items: center; width: 100%;">
+      <!-- Logo on the left -->
+      <img src="/logo.png" alt="Logo" onerror="this.style.display='none'" 
+           style="height:100px; margin-top:5px;">
+  
+      <!-- Heading on the right -->
+      <span style="font-weight: 600; font-size: 36px; margin-left: auto;">
+        Image Generation
+      </span>
     </div>
   </header>
+  
+  
 
   <div id="chat-container">
     <!-- Messages will appear here -->
@@ -195,7 +203,7 @@
 
   <div class="input-area">
     <div class="input-container">
-      <textarea id="prompt-input" rows="1" placeholder="Message Ideogram..."></textarea>
+      <textarea id="prompt-input" rows="1" placeholder="What do you want to make today?"></textarea>
       <button id="send-btn" class="send-btn" title="Send message">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
       </button>
@@ -203,6 +211,9 @@
   </div>
 
   <footer>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <img src="/footer_logo.png" alt="Logo" class="header-logo" onerror="this.style.display='none'" style="height:100px; margin-right:16px; margin-top:10px;">
+    </div>
     Ideogram AI can make mistakes. Check important info.
   </footer>
 
@@ -226,7 +237,7 @@
       
       const avatar = document.createElement('div');
       avatar.className = 'avatar';
-      avatar.innerText = role === 'user' ? 'U' : 'AI';
+      avatar.innerText = role === 'user' ? 'U' : 'PP';
       
       const contentDiv = document.createElement('div');
       contentDiv.className = 'content';

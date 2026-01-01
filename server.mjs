@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
-
+app.use(express.static(path.join(process.cwd(), "public")));
 app.use(session({
   secret: process.env.SESSION_SECRET || "default_secret",
   resave: false,
