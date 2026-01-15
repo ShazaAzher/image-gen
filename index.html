@@ -1,237 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Image Generation</title>
-  <style>
-    :root {
-      --bg: #ffffff;
-      --fg: #0f0f0f;
-      --muted: #ededf0;
-      --border: #dcdcdc;
-      --page: #f7f7f8;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Claude-like UI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    * { box-sizing: border-box; }
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--page);
-      color: var(--fg);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    <style>
+      [contenteditable]:empty:before {
+        content: attr(data-placeholder);
+        color: #9ca3af;
+      }
 
-    /* HEADER / FOOTER */
-        header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 32px;
-      background: #ffffff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 32px;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      }
 
-    .logo {
-      height: 60px;
-      width: auto;
-    }
+      .logo { height: 60px; }
 
-    .header-box {
-      padding: 10px 20px;
-      border-radius: 20px;
-      background: #f3f4f6;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
+      .header-box {
+        padding: 10px 20px;
+        border-radius: 20px;
+        background: #f3f4f6;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
 
-    .header-title {
-      font-size: 22px;
-      font-weight: 600;
-      color: #111827;
-    }
+      .header-title { font-size: 22px; font-weight: 600; }
 
-    /* MAIN */
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 48px 24px 24px;
-      gap: 24px;
-    }
+      .menu-item {
+        width: 100%;
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 14px;
+      }
+      .menu-item:hover { background: #f3f4f6; }
+    </style>
+  </head>
 
-    h1 {
-      font-size: 28px;
-      font-weight: 600;
-      margin: 0;
-      text-align: center;
-    }
+  <body class="bg-[#fafafa] text-gray-900 min-h-screen flex flex-col">
+    <header>
+      <img src="/static/logo.png" alt="Logo" class="logo" />
+      <div class="header-box">
+        <span class="header-title">Prose and Partners Strategist</span>
+      </div>
+    </header>
 
-    .prompt-box {
-      width: 100%;
-      max-width: 900px;
-      background: var(--bg);
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    <main class="flex-1 flex flex-col items-center px-4 pt-10">
 
-    textarea {
-      width: 100%;
-      min-height: 96px;
-      resize: none;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      padding: 12px 14px;
-      font-size: 14px;
-      font-family: inherit;
-      outline: none;
-    }
+      <h1 class="text-4xl md:text-5xl font-semibold mb-10 text-center">
+        How can I help you today?
+      </h1>
 
-    textarea:focus {
-      border-color: #aaa;
-    }
+      <!-- Chat Container -->
+      <div class="w-full max-w-2xl bg-white rounded-2xl shadow-lg border flex flex-col h-[520px]">
 
-    /* TOOLBAR */
-    .toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: var(--bg);
-      border-radius: 12px;
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-    }
+        <!-- Scrollable Chat Area -->
+        <div id="chat-area" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
 
-    .group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
+        <!-- Input Box -->
+        <div class="p-4 border-t flex flex-col gap-2">
+          <div
+            id="chatInput"
+            contenteditable="true"
+            data-placeholder="Let's chat..."
+            class="min-h-[3rem] max-h-20 overflow-y-auto outline-none text-base"
+          ></div>
 
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      height: 32px;
-      padding: 0 12px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--fg);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      user-select: none;
-    }
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <button id="plus-btn" class="p-2 rounded-lg hover:bg-gray-100">➕</button>
 
-    .btn:hover {
-      background: var(--muted);
-    }
+                <div
+                  id="plus-menu"
+                  class="hidden absolute top-full left-0 mt-2 w-56 bg-white border rounded-xl shadow-lg z-50"
+                >
+                  <button class="menu-item" onclick="setMode('files')">📎 Add files or photos</button>
+                  <button class="menu-item" onclick="setMode('screenshot')">📸 Take a screenshot</button>
+                  <button class="menu-item" onclick="setMode('research')">🧪 Research</button>
+                  <button class="menu-item" onclick="setMode('web')">🌐 Web search</button>
+                </div>
+              </div>
+              <button class="px-2 py-1 text-xs rounded-lg border hover:bg-gray-100">Extended thinking</button>
+            </div>
 
-    .btn.icon {
-      width: 32px;
-      padding: 0;
-      justify-content: center;
-    }
+            <div class="flex items-center gap-2">
+              <select id="model-select" class="text-xs border rounded-lg px-2 py-1 bg-white">
+                <option value="claude-opus-4-5">Opus 4.5</option>
+                <option value="claude-sonnet-4-5" selected>Sonnet 4.5</option>
+                <option value="claude-haiku-4-5">Haiku 4.5</option>
+              </select>
 
-    .btn.primary {
-      font-weight: 600;
-      border-color: var(--fg);
-    }
-
-    .btn.toggle[data-active="true"] {
-      background: var(--fg);
-      color: #fff;
-    }
-
-    .more {
-      font-size: 18px;
-      line-height: 0;
-    }
-
-    @media (max-width: 640px) {
-      h1 { font-size: 22px; }
-    }
-    
-    footer {
-      padding: 10px 20px;
-      font-size: 12px;
-      color: #6b7280;
-      background: white;
-    }
-
-    footer img {
-      height: 30px;
-      margin-bottom: 12px;
-    }
-  </style>
-</head>
-<body>
-
-
-  <header>
-    <img src="logo.png" alt="Logo" class="logo">
-    <div class="header-box">
-      <span class="header-title">Prose and Partners - Image Generation</span>
-    </div>
-  </header>
-
-  <main>
-    <h1>What can I help you with today?</h1>
-
-    <div class="prompt-box">
-      <textarea name="prompt" placeholder="Describe what you want to generate..."></textarea>
-
-      <div class="toolbar">
-        <div class="group">
-          <button class="btn">3.0&nbsp;&nbsp;Quality × 1</button>
-          <button class="btn">4:5</button>
-          <button class="btn">Realistic</button>
-          <button class="btn">Character</button>
-          <button class="btn">Color</button>
-        </div>
-
-        <div class="group">
-          <button class="btn toggle" data-active="false" onclick="toggle(this)">✨ Off</button>
-          <button class="btn toggle" data-active="false" onclick="toggle(this)">🔒 Private</button>
-          <button class="btn primary">Generate</button>
+              <button id="send-btn" class="bg-black text-white p-2 rounded-lg hover:bg-gray-800">↑</button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </main>
+    </main>
 
-  <footer>
-    <div class="footer imag">
-        <img src="footer_logo.png" alt="footer_logo" style="height:100px; margin-left:16px;">
-    </div>
-  </footer>
+    <script>
+      const sessionId = crypto.randomUUID();
 
-  <script>
-    function toggle(el) {
-      const active = el.getAttribute('data-active') === 'true';
-      el.setAttribute('data-active', String(!active));
-    }
+      const inputEl = document.getElementById("chatInput");
+      const chatArea = document.getElementById("chat-area");
+      const modelSelect = document.getElementById("model-select");
+      const sendBtn = document.getElementById("send-btn");
+      const plusBtn = document.getElementById("plus-btn");
+      const plusMenu = document.getElementById("plus-menu");
 
-    document.querySelector(".btn.primary").addEventListener("click", async () => {
-    const prompt = document.querySelector("textarea").value;
-    const response = await fetch("/api/generate", {
-      method: "POST",
-      body: new URLSearchParams({ prompt }) // encoding form data
-    });
-    const data = await response.json();
-    console.log(data);
-  });
+      let USE_WEB_SEARCH = false;
+      let USE_RESEARCH = false;
 
-  </script>
+      plusBtn.addEventListener("click", () => plusMenu.classList.toggle("hidden"));
+      function setMode(mode) {
+        USE_WEB_SEARCH = mode === "web";
+        USE_RESEARCH = mode === "research";
+        plusMenu.classList.add("hidden");
+      }
 
-</body>
+      sendBtn.addEventListener("click", handleSend);
+
+      async function handleSend() {
+        const text = inputEl.innerText.trim();
+        if (!text) return;
+
+        renderBubble(text, "user");
+        inputEl.innerText = "";
+
+        const reply = await sendMessage(text, USE_WEB_SEARCH, USE_RESEARCH);
+        renderBubble(reply, "assistant");
+
+        // Auto-scroll to bottom
+        chatArea.scrollTop = chatArea.scrollHeight;
+
+        USE_WEB_SEARCH = false;
+        USE_RESEARCH = false;
+      }
+
+      function renderBubble(text, role) {
+        const bubble = document.createElement("div");
+        bubble.className =
+          role === "user"
+            ? "self-end bg-blue-100 p-3 rounded-xl max-w-2xl"
+            : "self-start bg-gray-200 p-3 rounded-xl max-w-2xl";
+        bubble.innerText = text;
+        chatArea.appendChild(bubble);
+
+        // scroll to bottom
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+
+      function handleFiles() {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.multiple = true;
+        fileInput.accept = "image/*,video/*";
+        fileInput.onchange = async () => {
+          const files = Array.from(fileInput.files);
+          const formData = new FormData();
+          files.forEach(file => formData.append("files", file));
+
+          await fetch("/upload", {
+            method: "POST",
+            body: formData
+          });
+
+          // Do NOT render anything in the chat
+        };
+        fileInput.click();
+      }
+
+      async function handleScreenshot() {
+        try {
+          const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          const track = stream.getVideoTracks()[0];
+          const imageCapture = new ImageCapture(track);
+          const bitmap = await imageCapture.grabFrame();
+
+          // Convert to canvas
+          const canvas = document.createElement("canvas");
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(bitmap, 0, 0);
+          canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append("files", blob, "screenshot.png");
+            const res = await fetch("/upload", { method: "POST", body: formData });
+            const data = await res.json();
+            renderBubble(`Screenshot uploaded: ${data.files[0]}`, "user");
+          });
+
+          track.stop();
+        } catch (err) {
+          console.error(err);
+          alert("Screenshot failed or permission denied.");
+        }
+      }
+
+      function handleResearch() {
+        USE_RESEARCH = true;
+        plusMenu.classList.add("hidden");
+      }
+
+      function handleWebSearch() {
+        USE_WEB_SEARCH = true;
+        plusMenu.classList.add("hidden");
+      }
+
+      function setMode(mode) {
+        switch(mode) {
+          case "files": handleFiles(); break;
+          case "screenshot": handleScreenshot(); break;
+          case "research": handleResearch(); break;
+          case "web": handleWebSearch(); break;
+        }
+      }
+
+      async function sendMessage(text, useWebSearch, useResearch) {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: text,
+            session_id: sessionId,
+            model: modelSelect.value,
+            use_web_search: useWebSearch,
+            use_research: useResearch
+          })
+        });
+        const data = await res.json();
+        return data.reply;
+      }
+    </script>
+  </body>
 </html>

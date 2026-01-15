@@ -1,62 +1,230 @@
-import streamlit as st
-import os
+from fastapi import FastAPI, Request, UploadFile, File, HTTPException
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from anthropic import Anthropic
 from dotenv import load_dotenv
-import validators
+from pathlib import Path
+import os
+import uuid
+import shutil
 
+# --------------------
+# Setup
+# --------------------
 load_dotenv()
 
-api_key = os.getenv("ANTHROPIC_API_KEY")
-if not api_key:
-    raise ValueError("ANTHROPIC_API_KEY not found in environment")
+client = Anthropic()  # reads ANTHROPIC_API_KEY automatically
 
-client = Anthropic(api_key=api_key)
+BASE_DIR = Path(__file__).parent
+UPLOAD_DIR = BASE_DIR / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / "sessions.jsonl"
 
+app = FastAPI(title="Claude HTML UI")
 
-st.set_page_config(page_title="Claude Chat + Media", layout="wide")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# ---- Session state ----
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-if "input" not in st.session_state:
-    st.session_state.input = ""
+# --------------------
+# In-memory sessions (dev-safe)
+# --------------------
+SESSIONS = {}
 
-# ---- User input ----
-st.title("Claude Chat with Images & Video")
-with st.form(key="input_form"):
-    st.session_state.input = st.text_input("Type your message here:", st.session_state.input)
-    submitted = st.form_submit_button("Send")
+def get_session(session_id: str):
+    if session_id not in SESSIONS:
+        SESSIONS[session_id] = []
+    return SESSIONS[session_id]
+
+ALLOWED_MODELS = {
+    "claude-opus-4-5",
+    "claude-sonnet-4-5",
+    "claude-haiku-4-5",
+}
+
+MODEL_PRICING = {
+    "claude-opus-4-5": {
+        "input": 5.00,
+        "output": 25.00,
+    },
+    "claude-opus-4-1": {
+        "input": 15.00,
+        "output": 75.00,
+    },
+    "claude-opus-4": {
+        "input": 15.00,
+        "output": 75.00,
+    },
+    "claude-sonnet-4-5": {
+        "input": 3.00,
+        "output": 15.00,
+    },
+    "claude-sonnet-4": {
+        "input": 3.00,
+        "output": 15.00,
+    },
+    "claude-haiku-4-5": {
+        "input": 1.00,
+        "output": 5.00,
+    },
+    "claude-haiku-3-5": {
+        "input": 0.80,
+        "output": 4.00,
+    },
+    "claude-haiku-3": {
+        "input": 0.25,
+        "output": 1.25,
+    },
+}
+
+def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> dict:
+    pricing = MODEL_PRICING.get(model)
+    if not pricing:
+        return {
+            "input_cost": 0.0,
+            "output_cost": 0.0,
+            "total_cost": 0.0,
+        }
+
+    input_cost = (input_tokens / 1_000_000) * pricing["input"]
+    output_cost = (output_tokens / 1_000_000) * pricing["output"]
+
+    return {
+        "input_cost": round(input_cost, 6),
+        "output_cost": round(output_cost, 6),
+        "total_cost": round(input_cost + output_cost, 6),
+    }
+
+import json
+from datetime import datetime
+
+def log_interaction(entry: dict):
+    entry["timestamp"] = datetime.utcnow().isoformat()
+
+    with LOG_FILE.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(entry) + "\n")
+
+# --------------------
+# UI
+# --------------------
+@app.get("/", response_class=HTMLResponse)
+def serve_ui():
+    return (BASE_DIR / "index.html").read_text(encoding="utf-8")
+
+# --------------------
+# Chat
+# --------------------
+@app.post("/chat")
+async def chat(request: Request):
+    data = await request.json()
+    message = data.get("message")
+    session_id = data.get("session_id")
+    use_web_search = data.get("use_web_search", False)
+    use_research = data.get("use_research", False)
+    model = data.get("model", "claude-sonnet-4-5")
+
+    if not message or not session_id:
+        raise HTTPException(status_code=400, detail="Missing message or session_id")
+    if model not in ALLOWED_MODELS:
+        raise HTTPException(400, "Invalid model selected")
     
-if submitted and st.session_state.input.strip():
-    user_msg = st.session_state.input.strip()
-    st.session_state.messages.append({"role": "user", "content": user_msg})
-    st.session_state.input = ""  # reset input
+    messages = get_session(session_id)
+    messages.append({"role": "user", "content": message})
 
-    # ---- Call Claude ----
+    # Build tools array if web search enabled
+    tools = []
+    if use_web_search or use_research:
+        tools.append({
+            "type": "web_search_20250305",
+            "name": "web_search",
+            "max_uses": 5
+        })
+
+    # Optional extra prompt tweak if research is requested
+    if use_research:
+        messages.append({
+            "role": "system",
+            "content": "Please conduct deep research using web search as needed and "
+                       "provide citations when available."
+        })
+
     response = client.messages.create(
-        model="claude-3-5-sonnet-20241022",
-        messages=st.session_state.messages,
-        max_tokens=512,
+        model=model,
+        messages=messages,
+        max_tokens=1024,
+        tools=tools
     )
-    
-    assistant_msg = response.content[0].text
-    st.session_state.messages.append({"role": "assistant", "content": assistant_msg})
 
-# ---- Display messages ----
-for msg in st.session_state.messages:
-    if msg["role"] == "user":
-        st.markdown(f"<div style='text-align:right; background:#dbeafe; padding:8px; border-radius:8px; margin:4px 0;'>{msg['content']}</div>", unsafe_allow_html=True)
-    else:
-        # Split message by spaces to detect URLs
-        parts = msg['content'].split()
-        st.markdown(f"<div style='text-align:left; background:#e5e7eb; padding:8px; border-radius:8px; margin:4px 0;'>{msg['content']}</div>", unsafe_allow_html=True)
-        
-        for part in parts:
-            if validators.url(part):
-                # Images
-                if any(part.lower().endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".gif"]):
-                    st.image(part, use_column_width=True)
-                # Videos
-                if any(part.lower().endswith(ext) for ext in [".mp4", ".mov", ".webm"]):
-                    st.video(part)
+    usage = getattr(response, "usage", None)
+
+    input_tokens = usage.input_tokens if usage else 0
+    output_tokens = usage.output_tokens if usage else 0
+
+    # Extract text safely
+    assistant_text = []
+
+    for block in response.content:
+        if block.type == "text":
+            assistant_text.append(block.text)
+
+    assistant_text = "\n".join(assistant_text)
+
+    messages.append({"role": "assistant", "content": assistant_text})
+
+    costs = calculate_cost(
+        model=model,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+    )
+
+    log_entry = {
+        "session_id": session_id,
+        "model": model,
+        "prompt": message,
+        "response": assistant_text,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "costs": costs,
+        "flags": {
+            "web_search": use_web_search,
+            "research": use_research,
+        }
+    }
+
+    log_interaction(log_entry)
+    
+    return {
+        "reply": assistant_text,
+        "model": model,
+        "usage": {
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "cost": costs,
+    }
+    }
+
+# --------------------
+# Uploads (files / screenshots)
+# --------------------
+@app.post("/upload")
+async def upload(files: list[UploadFile] = File(...)):
+    stored = []
+
+    for file in files:
+        filename = f"{uuid.uuid4()}_{file.filename}"
+        dest = UPLOAD_DIR / filename
+
+        with dest.open("wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        stored.append(filename)
+
+    return {"files": stored}
